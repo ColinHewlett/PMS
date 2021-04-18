@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package clinicpms.controller;
+
 import clinicpms.constants.ClinicPMS;
 import clinicpms.model.Appointments;
 import clinicpms.model.Appointment;
@@ -34,19 +35,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.Iterator;
+import java.util.Optional;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.SwingUtilities;
 
 /**
  *
  * @author colin
  */
-
-
 public class AppointmentViewController extends ViewController{
 
     private enum RequestedAppointmentState{ STARTS_AFTER_PREVIOUS_SLOT,
@@ -75,18 +76,36 @@ public class AppointmentViewController extends ViewController{
      * @param owner JFrame the owning frame the view controller needs to reference 
      * if managing a customised JDialog view
      */
-    public AppointmentViewController(ActionListener controller, JFrame desktopView)throws StoreException{
+    public AppointmentViewController(ActionListener controller, JFrame desktopView, Optional<EntityDescriptor> ed)throws StoreException{
         setMyController(controller);
         this.owningFrame = desktopView;
         pcSupport = new PropertyChangeSupport(this);
-        setNewEntityDescriptor(new EntityDescriptor());
-        getNewEntityDescriptor().getRequest().setDay(LocalDate.now());
-        setEntityDescriptorFromView(getNewEntityDescriptor());
+        //setNewEntityDescriptor(new EntityDescriptor());
+        //getNewEntityDescriptor().getRequest().setDay(LocalDate.now());
+        EntityDescriptor e = ed.orElse(new EntityDescriptor());
+        setNewEntityDescriptor(e);
         //centre appointments view relative to desktop;
         this.view = new AppointmentsForDayView(this, getNewEntityDescriptor());
         super.centreViewOnDesktop(desktopView, view);
         this.view.addInternalFrameClosingListener(); 
         this.view.initialiseView();
+        this.day = getNewEntityDescriptor().getRequest().getDay();
+        /**
+         * following code done in ignorance
+         * but suspicion that threads had something to do with issue
+         * Issue -> first try to initialise JInternalframe title never worked
+         */
+        /*
+        SwingUtilities.invokeLater(new Runnable() 
+        {
+          public void run()
+          {
+            AppointmentViewController.this.view.setTitle(
+                    AppointmentViewController.this.day.format(DateTimeFormatter.ofPattern("dd/MM/yy")) + " schedule");
+          }
+        });
+        */
+        
         
     }
     @Override
@@ -140,8 +159,9 @@ public class AppointmentViewController extends ViewController{
                 result = requestToChangeAppointmentSchedule(ViewMode.UPDATE);
             }
             if (result!=null){
+           
                 dialog.setModal(false);
-                serialiseAppointmentToEDAppointment(result);
+                //serialiseAppointmentToEDAppointment(result);
                 //close dialog
                 dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
                 dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
@@ -156,6 +176,16 @@ public class AppointmentViewController extends ViewController{
                 pcEvent = new PropertyChangeEvent(this,
                     AppointmentViewControllerPropertyEvent.APPOINTMENTS_FOR_DAY_RECEIVED.toString(),
                     getOldEntityDescriptor(),getNewEntityDescriptor());
+                pcSupport.firePropertyChange(pcEvent);
+
+                //either an update appt or create appt event has occurred
+                //so clear empty slot list!!!
+                pcSupport.removePropertyChangeListener(this.dialog);
+                pcSupport.addPropertyChangeListener(view);
+                initialiseNewEntityDescriptor();
+                pcEvent = new PropertyChangeEvent(this,
+                    AppointmentViewControllerPropertyEvent.APPOINTMENT_SLOTS_FROM_DAY_RECEIVED.toString(),
+                    null,getNewEntityDescriptor());
                 pcSupport.firePropertyChange(pcEvent);
 
             }
@@ -312,16 +342,22 @@ public class AppointmentViewController extends ViewController{
             LocalDate day = getEntityDescriptorFromView().getRequest().getDay();
             Duration duration = getEntityDescriptorFromView().getRequest().getDuration();
             try{
+                
                 this.appointments =
                     new Appointments().getAppointmentsFrom(day);
-                ArrayList<Appointment> availableSlotsOfDuration = 
-                        getAvailableSlotsOfDuration(
-                                this.appointments,duration,day);
-                serialiseAppointmentsToEDCollection(availableSlotsOfDuration);
-                pcEvent = new PropertyChangeEvent(this,
-                    AppointmentViewControllerPropertyEvent.APPOINTMENT_SLOTS_FROM_DAY_RECEIVED.toString(),
-                    getOldEntityDescriptor(),getNewEntityDescriptor());
-                pcSupport.firePropertyChange(pcEvent);
+                if (this.appointments.isEmpty()){
+                    JOptionPane.showMessageDialog(null, "No scheduled appointments from selected scan date (" + day.format(dmyFormat) + ")");
+                }
+                else{
+                    ArrayList<Appointment> availableSlotsOfDuration =  
+                            getAvailableSlotsOfDuration(
+                                    this.appointments,duration,day);
+                    serialiseAppointmentsToEDCollection(availableSlotsOfDuration);
+                    pcEvent = new PropertyChangeEvent(this,
+                        AppointmentViewControllerPropertyEvent.APPOINTMENT_SLOTS_FROM_DAY_RECEIVED.toString(),
+                        getOldEntityDescriptor(),getNewEntityDescriptor());
+                    pcSupport.firePropertyChange(pcEvent);
+                }
             }
             catch (StoreException ex){
                 //UnspecifiedError action
@@ -879,7 +915,7 @@ public class AppointmentViewController extends ViewController{
     private void setOldEntityDescriptor(EntityDescriptor e){
         this.oldEntityDescriptor = e;
     }
-    private EntityDescriptor getEntityDescriptorFromView(){
+    public EntityDescriptor getEntityDescriptorFromView(){
         return this.entityDescriptorFromView;
     }
     private void setEntityDescriptorFromView(EntityDescriptor e){
@@ -1016,36 +1052,5 @@ public class AppointmentViewController extends ViewController{
     public JInternalFrame getView( ){
         return view;
     }
-    private void setView(AppointmentsForDayView view ){
-        this.view = view;
-    }
-    
-    /*
-    private void requestToChangeAppointmentSchedulex(ViewMode mode) throws StoreException{
-        Appointment result = null;
-        result = addRequestedAppointmentToAppointmentSchedule(mode);
-        if (result!=null){
-            serialiseAppointmentToEDAppointment(result);
-            //close dialog
-            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
-            LocalDate day = getEntityDescriptorFromView().getRequest().getDay();
-            this.appointments =
-                new Appointments().getAppointmentsFor(day);
-            this.appointments = getAppointmentsForSelectedDayIncludingEmptySlots(this.appointments,day);
-            serialiseAppointmentsToEDCollection(this.appointments);
-            pcEvent = new PropertyChangeEvent(this,
-                AppointmentViewControllerPropertyEvent.APPOINTMENTS_FOR_DAY_RECEIVED.toString(),
-                getOldEntityDescriptor(),getNewEntityDescriptor());
-            pcSupport.firePropertyChange(pcEvent);
-        }
-        else{
-            pcEvent = new PropertyChangeEvent(this,
-                AppointmentViewDialogPropertyEvent.APPOINTMENT_VIEW_ERROR.toString(),
-                getOldEntityDescriptor(),getNewEntityDescriptor());
-            pcSupport.firePropertyChange(pcEvent);
-        }
-    }
-*/
-    
+  
 }

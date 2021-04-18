@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package clinicpms.view;
+import clinicpms.controller.AppointmentViewController;
 import clinicpms.controller.EntityDescriptor;
 import clinicpms.controller.ViewController;
 import clinicpms.controller.ViewController.AppointmentViewControllerActionEvent;
@@ -20,6 +21,7 @@ import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.JOptionPane;
@@ -41,6 +43,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 
 
 
@@ -70,10 +73,15 @@ public class AppointmentsForDayView extends View{
         if (propertyName.equals(ViewController.AppointmentViewControllerPropertyEvent.APPOINTMENTS_FOR_DAY_RECEIVED.toString())){
             setEntityDescriptor((EntityDescriptor)e.getNewValue());
             initialiseViewFromEDCollection();
+            /*
+            
+            */
+            
         }
         else if (propertyName.equals(ViewController.AppointmentViewControllerPropertyEvent.APPOINTMENT_SLOTS_FROM_DAY_RECEIVED.toString())){
             setEntityDescriptor((EntityDescriptor)e.getNewValue());
             populateEmptySlotAvailabilityTable(getEntityDescriptor().getAppointments());
+            refreshAppointmentTableWithCurrentlySelectedDate();
             //initialiseViewFromEDCollection();
             //APPOINTMENT_VIEW_ERROR
         } 
@@ -84,7 +92,7 @@ public class AppointmentsForDayView extends View{
     }
     public void initialiseView(){
         //following action invokes call to controller via DateChange\Listener
-        LocalDate day = LocalDate.now(); 
+        LocalDate day = getEntityDescriptor().getRequest().getDay(); 
         while (!new AppointmentDateVetoPolicy().isDateAllowed(day)){
             day = day.plusDays(1);
         }
@@ -92,12 +100,13 @@ public class AppointmentsForDayView extends View{
         /**
          * unsure why the following code is necessary to initialise tblAppointments
          * on entry to the view
-         */
+         
         getEntityDescriptor().getRequest().setDay(AppointmentsForDayView.this.dayDatePicker.getDate());
         ActionEvent actionEvent = new ActionEvent(AppointmentsForDayView.this, 
                 ActionEvent.ACTION_PERFORMED,
                 AppointmentViewControllerActionEvent.APPOINTMENTS_FOR_DAY_REQUEST.toString());
-        AppointmentsForDayView.this.getMyController().actionPerformed(actionEvent);
+        AppointmentsForDayView.this.getMyController().actionPerformed(actionEvent);  
+        */ 
     }
     @Override
     public EntityDescriptor getEntityDescriptor(){
@@ -149,6 +158,20 @@ public class AppointmentsForDayView extends View{
             }
         });
     }
+    private void refreshAppointmentTableWithCurrentlySelectedDate(){
+        ActionEvent actionEvent = new ActionEvent(AppointmentsForDayView.this, 
+                ActionEvent.ACTION_PERFORMED,
+                AppointmentViewControllerActionEvent.APPOINTMENTS_FOR_DAY_REQUEST.toString());
+        AppointmentsForDayView.this.getMyController().actionPerformed(actionEvent);
+        SwingUtilities.invokeLater(new Runnable() 
+        {
+          public void run()
+          {
+            AppointmentsForDayView.this.setTitle(
+                    AppointmentsForDayView.this.dayDatePicker.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yy")) + " schedule");
+          }
+        });
+    }
     private void doEmptySlotAvailabilityTableRowSelection(int row){
         String appointmentDate = (String)this.tblEmptySlotAvailability.getModel().getValueAt(row, 0);
         LocalDate start = LocalDateTime.parse(appointmentDate, emptySlotStartFormat).toLocalDate();
@@ -177,12 +200,14 @@ public class AppointmentsForDayView extends View{
         columnModel.getColumn(2).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
         columnModel.getColumn(3).setPreferredWidth(105);
         columnModel.getColumn(3).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
-        columnModel.getColumn(4).setPreferredWidth(300);
+        columnModel.getColumn(4).setMinWidth(300);
         columnModel.getColumn(4).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
         JTableHeader tableHeader = this.tblAppointments.getTableHeader();
         tableHeader.setBackground(new Color(220,220,220));
         tableHeader.setOpaque(true);
         this.tblAppointments.setRowSelectionAllowed(true);
+        
+        //this.tblAppointments.repaint();
         //this.tblAppointments.setRowSelectionInterval(0, 4);
         /*
         DefaultTableCellRenderer renderer = 
@@ -347,7 +372,7 @@ public class AppointmentsForDayView extends View{
         pnlControlsLayout.setHorizontalGroup(
             pnlControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlControlsLayout.createSequentialGroup()
-                .addContainerGap(28, Short.MAX_VALUE)
+                .addContainerGap(30, Short.MAX_VALUE)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(31, 31, 31)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, 410, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -430,8 +455,8 @@ public class AppointmentsForDayView extends View{
             pnlAppointmentScheduleForDayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlAppointmentScheduleForDayLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(scrAppointmentsForDayTable)
-                .addContainerGap())
+                .addComponent(scrAppointmentsForDayTable, javax.swing.GroupLayout.PREFERRED_SIZE, 690, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnlAppointmentScheduleForDayLayout.setVerticalGroup(
             pnlAppointmentScheduleForDayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -578,28 +603,47 @@ public class AppointmentsForDayView extends View{
                     ActionEvent.ACTION_PERFORMED,
                     AppointmentViewControllerActionEvent.APPOINTMENTS_FOR_DAY_REQUEST.toString());
             AppointmentsForDayView.this.getMyController().actionPerformed(actionEvent);
+            SwingUtilities.invokeLater(new Runnable() 
+            {
+              public void run()
+              {
+                AppointmentsForDayView.this.setTitle(
+                        AppointmentsForDayView.this.dayDatePicker.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yy")) + " schedule");
+              }
+            });
         }
     }
-    /*
-    private void doSearchEmptySlot(){
-        LocalDate searchStartDate = dayDatePicker.getDate();
-        Duration searchDuration = (Duration)cmbSelectSlotDuration.getSelectedItem();
-        if (!searchDuration.isZero()){
-            if(this.rdbSelectWeeks.isSelected()){
-                searchStartDate = searchStartDate.plusWeeks((Integer)this.spnSlotSearchOffset.getValue());
-            }
-            else searchStartDate = searchStartDate.plusMonths((Integer)this.spnSlotSearchOffset.getValue());
-            
-            getEntityDescriptor().getRequest().setDay(searchStartDate);
-            getEntityDescriptor().getRequest().setDuration(searchDuration);
-            ActionEvent actionEvent = new ActionEvent(AppointmentsForDayView.this, 
-                ActionEvent.ACTION_PERFORMED,
-                AppointmentViewControllerActionEvent.APPOINTMENT_SLOTS_FROM_DATE_REQUEST.toString());
-            AppointmentsForDayView.this.getMyController().actionPerformed(actionEvent);
-        }  
-    }
-    */
+    
     private void populateEmptySlotAvailabilityTable(EntityDescriptor.Appointments a){
+        EmptySlotAvailability2ColumnTableModel model;
+        if (this.tblEmptySlotAvailability!=null){
+            jScrollPane1.remove(this.tblEmptySlotAvailability);   
+        }
+        this.tblEmptySlotAvailability = new JTable(new EmptySlotAvailability2ColumnTableModel());
+        jScrollPane1.setViewportView(this.tblEmptySlotAvailability);
+        setEmptySlotAvailabilityTableListener();
+        model = (EmptySlotAvailability2ColumnTableModel)this.tblEmptySlotAvailability.getModel();
+        model.removeAllElements();
+//model.fireTableDataChanged();
+        Iterator<EntityDescriptor.Appointment> it = a.getData().iterator();
+        while (it.hasNext()){
+            ((EmptySlotAvailability2ColumnTableModel)this.tblEmptySlotAvailability.getModel()).addElement(it.next());
+        }
+        //model.fireTableDataChanged();
+        JTableHeader tableHeader = this.tblEmptySlotAvailability.getTableHeader();
+        tableHeader.setBackground(new Color(220,220,220));
+        //tableHeader.setBackground(new Color(0,0,0));
+        tableHeader.setOpaque(true);
+        
+        TableColumnModel columnModel = this.tblEmptySlotAvailability.getColumnModel();
+        columnModel.getColumn(0).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
+        columnModel.getColumn(1).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
+        //this.tblEmptySlotAvailability.repaint();
+    }
+    private void populateEmptySlotAvailabilityTablex(EntityDescriptor.Appointments a){
+        
+        EmptySlotAvailability2ColumnTableModel.emptySlots = a.getData();
+        //this.tblEmptySlotAvailability = new JTable(new EmptySlotAvailability2ColumnTableModel() );
         EmptySlotAvailability2ColumnTableModel.emptySlots = a.getData();
         this.tblEmptySlotAvailability.setModel(new EmptySlotAvailability2ColumnTableModel());
         
@@ -610,8 +654,14 @@ public class AppointmentsForDayView extends View{
         TableColumnModel columnModel = this.tblEmptySlotAvailability.getColumnModel();
         columnModel.getColumn(0).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
         columnModel.getColumn(1).setHeaderRenderer(new TableHeaderCellBorderRenderer(Color.LIGHT_GRAY));
+/*
+        if (a.getData().isEmpty()){
+            EmptySlotAvailability2ColumnTableModel model = (EmptySlotAvailability2ColumnTableModel)tblEmptySlotAvailability.getModel(); 
+            int count = model.getRowCount();
+            ((DefaultTableModel)tblEmptySlotAvailability.getModel()).setRowCount(0);
+        }
+*/
+        //this.tblEmptySlotAvailability.repaint();
     }
-    public void repaintTable(){
-        this.tblAppointments.repaint();
-    }
+
 }

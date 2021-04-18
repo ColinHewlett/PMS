@@ -5,24 +5,22 @@
  */
 package clinicpms.controller;
 
-import clinicpms.model.Appointment;
-import clinicpms.model.Appointments;
-import clinicpms.model.Patient;
-import clinicpms.store.AccessStore;
-import clinicpms.store.CSVMigrationManager;
-import clinicpms.store.interfaces.IStore;
+
+
+
+
+
+
 import clinicpms.store.Store;
 import clinicpms.store.Store.Storage;
 import clinicpms.store.exceptions.StoreException;
 import clinicpms.view.DesktopView;
-import java.awt.Dimension;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Optional;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.JOptionPane;
 
 /**
@@ -40,15 +38,17 @@ public class DesktopViewController extends ViewController{
                             PATIENT_VIEW_CONTROLLER,
                             APPOINTMENT_VIEW_CONTROLLER,
                          }
-   
-    
+    @Override
+    public EntityDescriptor getEntityDescriptorFromView(){
+        return null;
+    }
     
     private DesktopViewController(){
         
         //setAppointmentsViewController(new AppointmentViewController(this));
         //setPatientViewController(new PatientViewController(this));
         view = new DesktopView(this);
-        view.setSize(850, 700);
+        view.setSize(850, 650);
         view.setVisible(true);
         setView(view);
         //view.setContentPane(view);
@@ -122,17 +122,14 @@ public class DesktopViewController extends ViewController{
                     this.requestViewControllersToCloseViews();
                 }
             }
+        }
+        else if (e.getActionCommand().equals(
+            ViewController.PatientViewControllerActionEvent.
+                    APPOINTMENT_VIEW_CONTROLLER_REQUEST.toString())){
+            PatientViewController patientViewController = (PatientViewController)e.getSource();
+            Optional<EntityDescriptor> ed = Optional.of(patientViewController.getEntityDescriptorFromView());
+            createNewAppointmentViewController(ed);
             
-            /*
-            else{//view controller successfully removed from collection
-                isAppointmentViewControllerActive = (appointmentViewControllers.size() > 0);
-                isPatientViewControllerActive = (patientViewControllers.size() > 0);
-                if ((!(isAppointmentViewControllerActive||isPatientViewControllerActive)) 
-                        && isDesktopPendingClosure){
-                    getView().dispose();
-                }
-            }
-            */
         }
     }
     /**
@@ -168,7 +165,9 @@ public class DesktopViewController extends ViewController{
         }
         else if (e.getActionCommand().equals(
             ViewController.DesktopViewControllerActionEvent.
-                    DESKTOP_VIEW_APPOINTMENTS_REQUEST.toString())){
+                    APPOINTMENT_VIEW_CONTROLLER_REQUEST.toString())){
+            createNewAppointmentViewController(Optional.ofNullable(null));
+            /*
             try{
                 appointmentViewControllers.add(
                                             new AppointmentViewController(this, getView()));
@@ -187,22 +186,16 @@ public class DesktopViewController extends ViewController{
             }
             catch (StoreException ex){
                 displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
-                /*
-                JOptionPane.showMessageDialog(getView(),
-                                          new ErrorMessagePanel(ex.getMessage()));
-                */
             }
             catch (PropertyVetoException ex){
                 displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
-                /*
-                JOptionPane.showMessageDialog(getView(),
-                                          new ErrorMessagePanel(ex.getMessage()));
-                */
+
             }
+            */
         }
         else if (e.getActionCommand().equals(
             ViewController.DesktopViewControllerActionEvent.
-                    DESKTOP_VIEW_PATIENTS_REQUEST.toString())){
+                    PATIENT_VIEW_CONTROLLER_REQUEST.toString())){
             try{
                 patientViewControllers.add(
                                         new PatientViewController(this, getView()));
@@ -215,7 +208,7 @@ public class DesktopViewController extends ViewController{
                 pvc.getView().setIconifiable(true);
                 pvc.getView().setResizable(false);
                 pvc.getView().setSelected(true);
-                pvc.getView().setSize(525,585);
+                pvc.getView().setSize(635,585);
             }
             catch (StoreException ex){
                 displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
@@ -240,9 +233,11 @@ public class DesktopViewController extends ViewController{
             System.exit(0);
         }
         
+        /*
         else if(e.getActionCommand().equals(
                 ViewController.DesktopViewControllerActionEvent.MIGRATE_APPOINTMENT_DBF_TO_CSV.toString())){
             try{
+        */
                 /**
                  * CSV_APPOINTMENT_FILE_CONVERTER action produces csv appointments file
                  * from the csv version of denApp.dbf
@@ -253,20 +248,22 @@ public class DesktopViewController extends ViewController{
                  * involved in the conversion
                  * -- headers row removed and any obvious duff lines (blank/rubbish) that might exist
                  */
+                /*
                 CSVMigrationManager.action(Store.MigrationMethod.CSV_APPOINTMENT_FILE_CONVERTER);
             }
             catch (StoreException ex){
                 displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
+                */
                 /*
                 JOptionPane.showMessageDialog(getView(),
                                           new ErrorMessagePanel(ex.getMessage()));
                 */
+                /*
             }
         } 
+                */
         
-        else if(e.getActionCommand().equals(
-                ViewController.DesktopViewControllerActionEvent.MIGRATE_PATIENT_DBF_TO_CSV.toString())){
-            try{
+
                 /**
                  * CSV_PATIENT_FILE_CONVERTER action produces a csv file comprising
                  * appointment records, derived from the csv file imported from the
@@ -280,20 +277,7 @@ public class DesktopViewController extends ViewController{
                  * -- 20773 "missing name" replaces the blanks in name fields
                  * -- duplicate keys 14155 and 17755 found and duplicate key removed
                  */
-                CSVMigrationManager.action(Store.MigrationMethod.CSV_PATIENT_FILE_CONVERTER);
-            }
-            catch (StoreException ex){
-                displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
-                /*
-                JOptionPane.showMessageDialog(getView(),
-                                          new ErrorMessagePanel(ex.getMessage()));
-                */
-            }
-        }
-        
-        else if(e.getActionCommand().equals(
-                ViewController.DesktopViewControllerActionEvent.MIGRATE_INTEGRITY_CHECK.toString())){
-            try{
+
                 /**
                  * CSV_MIGRATION_INTEGRITY_PROCESS action produces a list of orphaned 
                  * appointments which refer to patient keys which no longer exist; and
@@ -308,30 +292,7 @@ public class DesktopViewController extends ViewController{
                  * (37794 - 10081 = 27713 remaining appointment records)
                  * 
                  */
-                CSVMigrationManager.action(Store.MigrationMethod.CSV_MIGRATION_INTEGRITY_PROCESS);
-            }
-            catch (StoreException ex){
-                displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
-                /*
-                JOptionPane.showMessageDialog(getView(),
-                                          new ErrorMessagePanel(ex.getMessage()));
-                */
-            }
-        }
-        else if(e.getActionCommand().equals(
-                ViewController.DesktopViewControllerActionEvent.MIGRATE_PATIENT_DATE_CLEANED_IN_ACCESS.toString())){
-            try{
-                AccessStore store = AccessStore.getInstance();
-                store.tidyPatientImportedDate();
-            }
-            catch (StoreException ex){
-                displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
-                /*
-                JOptionPane.showMessageDialog(getView(),
-                                          new ErrorMessagePanel(ex.getMessage()));
-                */
-            }
-        }
+                
     }
 
     private DesktopView getView(){
@@ -345,7 +306,6 @@ public class DesktopViewController extends ViewController{
      * @param args the command line arguments
      */
     public static void main(String[] args) {   
-        Border border = null;
         try {
             Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
             /**
@@ -423,6 +383,39 @@ public class DesktopViewController extends ViewController{
             //this.requestViewControllersToCloseViews();
         }
          
+    }
+    
+    private void createNewAppointmentViewController(Optional<EntityDescriptor> ed){
+        try{
+                appointmentViewControllers.add(
+                                            new AppointmentViewController(this, getView(),ed));
+                AppointmentViewController avc = 
+                        appointmentViewControllers.get(appointmentViewControllers.size()-1);
+                
+                this.getView().getDeskTop().add(avc.getView());
+                avc.getView().setVisible(true);
+                avc.getView().setTitle("Appointments");
+                avc.getView().setClosable(false);
+                avc.getView().setMaximizable(false);
+                avc.getView().setIconifiable(true);
+                avc.getView().setResizable(false);
+                avc.getView().setSelected(true);
+                avc.getView().setSize(760,550);
+            }
+            catch (StoreException ex){
+                displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
+                /*
+                JOptionPane.showMessageDialog(getView(),
+                                          new ErrorMessagePanel(ex.getMessage()));
+                */
+            }
+            catch (PropertyVetoException ex){
+                displayErrorMessage(ex.getMessage(),"DesktopViewController error",JOptionPane.WARNING_MESSAGE);
+                /*
+                JOptionPane.showMessageDialog(getView(),
+                                          new ErrorMessagePanel(ex.getMessage()));
+                */
+            }
     }
     
     
