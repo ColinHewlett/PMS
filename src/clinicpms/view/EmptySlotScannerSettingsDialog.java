@@ -8,6 +8,7 @@ package clinicpms.view;
 import clinicpms.controller.EntityDescriptor;
 import clinicpms.controller.ViewController;
 import clinicpms.view.interfaces.IView;
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -279,15 +280,19 @@ cmbSelectSlotDuration.addActionListener(new java.awt.event.ActionListener() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmbSelectSlotDurationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbSelectSlotDurationActionPerformed
-        if (this.cmbSelectSlotDuration.getSelectedIndex()==0){
+        if ((this.cmbSelectSlotDuration.getSelectedIndex()==0) ||
+                (this.cmbSelectSlotDuration.getSelectedIndex()==-1)){
             this.rdbSelectMonths.setEnabled(false);
             this.rdbSelectWeeks.setEnabled(false);
             this.spnSlotSearchOffset.setEnabled(false);
+            this.cmbSelectSlotDuration.setForeground(Color.red);
         }
         else{
+            
             this.rdbSelectMonths.setEnabled(true);
             this.rdbSelectWeeks.setEnabled(true);
             this.spnSlotSearchOffset.setEnabled(true); 
+            this.cmbSelectSlotDuration.setForeground(Color.black);
         }
     }//GEN-LAST:event_cmbSelectSlotDurationActionPerformed
 
