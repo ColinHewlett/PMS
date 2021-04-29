@@ -45,16 +45,8 @@ public class EmptySlotScannerSettingsDialog extends AppointmentViewDialog{
         this.buttonGroup1.add(this.rdbSelectWeeks);
         this.rdbSelectWeeks.setSelected(true);
         
-        if (this.cmbSelectSlotDuration.getSelectedIndex()==0){
-            this.rdbSelectMonths.setEnabled(false);
-            this.rdbSelectWeeks.setEnabled(false);
-            this.spnSlotSearchOffset.setEnabled(false);
-        }
-        else{
-            this.rdbSelectMonths.setEnabled(true);
-            this.rdbSelectWeeks.setEnabled(true);
-            this.spnSlotSearchOffset.setEnabled(true); 
-        }
+        cmbSelectSlotDurationActionPerformed(null);
+
         initialiseDialogClosing();
         setEntityDescriptor(ed);
         setMyController(myController);
