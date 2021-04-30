@@ -5,11 +5,7 @@
  */
 package clinicpms.view;
 
-import clinicpms.controller.AppointmentViewController;
 import clinicpms.controller.EntityDescriptor;
-import clinicpms.controller.ViewController;
-import clinicpms.view.DesktopView;
-import clinicpms.view.AppointmentsForDayView;
 import clinicpms.view.interfaces.IView;
 import clinicpms.view.interfaces.IViewInternalFrameListener;
 import java.awt.event.ActionListener;
@@ -66,5 +62,4 @@ public abstract class View extends JInternalFrame
         }
         return result;
     }
-
 }

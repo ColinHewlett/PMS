@@ -527,21 +527,20 @@ public class AppointmentCreatorEditorModalViewer extends View {
             }
             if (OKToSaveAppointment==JOptionPane.YES_OPTION){
                 switch (getViewMode()){
-                    case CREATE -> {
+                    case CREATE:
                         evt = new ActionEvent(AppointmentCreatorEditorModalViewer.this,
                             ActionEvent.ACTION_PERFORMED,
                             ViewController.AppointmentViewDialogActionEvent.
                             APPOINTMENT_VIEW_CREATE_REQUEST.toString());
                         AppointmentCreatorEditorModalViewer.this.getMyController().actionPerformed(evt);
-                    }
-                    case UPDATE -> {
+                        break;
+                    case UPDATE:
                         evt = new ActionEvent(AppointmentCreatorEditorModalViewer.this,
                             ActionEvent.ACTION_PERFORMED,
                             ViewController.AppointmentViewDialogActionEvent.
                             APPOINTMENT_VIEW_UPDATE_REQUEST.toString());
                         AppointmentCreatorEditorModalViewer.this.getMyController().actionPerformed(evt);
-
-                    }
+                        break;
                 }
             }
         }
