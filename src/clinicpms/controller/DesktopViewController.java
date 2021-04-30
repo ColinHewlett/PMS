@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Optional;
 import javax.swing.border.Border;
+import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 
 /**
@@ -185,7 +186,7 @@ public class DesktopViewController extends ViewController{
                                         new PatientViewController(this, getView()));
                 PatientViewController pvc = patientViewControllers.get(patientViewControllers.size()-1);
 
-                this.getView().getDeskTop().add(pvc.getView());
+                this.getView().getDeskTop().add((JInternalFrame)pvc.getView());
                 pvc.getView().setVisible(true);
                 pvc.getView().setClosable(false);
                 pvc.getView().setMaximizable(false);

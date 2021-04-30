@@ -51,17 +51,20 @@ public abstract class View extends JInternalFrame
                 result = new AppointmentsForDayView(controller, ed);
                 break;
             case APPOINTMENT_CREATOR_VIEW:
+                result = null;
                 break;
             case APPOINTMENT_CREATOR_EDITOR_VIEW:
+                result = new AppointmentCreatorEditorModalViewer(controller, ed, dtView.getContentPane());
                 break;
             case APPOINTMENT_EDITOR_VIEW:
+                result = null;
                 break;
             case PATIENT_VIEW:
                 result = new PatientView(controller, ed);
                 break;
                 
         }
-        return null;
+        return result;
     }
 
 }
