@@ -337,6 +337,8 @@ public class DesktopViewController extends ViewController{
                     case "SQL_EXPRESS" -> Store.setStorageType(Storage.SQL_EXPRESS);
                 }
             }
+            Store.setDatabaseLocatorPath(args[1]);
+            
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());

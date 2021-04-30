@@ -360,6 +360,7 @@ public class AppointmentViewController extends ViewController{
         }
         else if (e.getActionCommand().equals(AppointmentViewControllerActionEvent.APPOINTMENT_UPDATE_VIEW_REQUEST.toString())){
             if (getEntityDescriptorFromView().getRequest().getAppointment().getData().getKey() != null){
+                /*
                 try{
                     Appointment appointment = new Appointment(
                             getEntityDescriptorFromView().getRequest().
@@ -374,6 +375,27 @@ public class AppointmentViewController extends ViewController{
                     this.dialog.setLocationRelativeTo(this.view);
                     this.dialog.initialiseView();
                     this.dialog.setVisible(true);
+                    
+                }
+                */
+                try{
+                    Appointment appointment = new Appointment(
+                            getEntityDescriptorFromView().getRequest().
+                                    getAppointment().getData().getKey()).read();
+                    ArrayList<Patient> patients = new Patients().getPatients();
+                    initialiseNewEntityDescriptor();
+                    serialiseAppointmentToEDAppointment(appointment);
+                    serialisePatientsToEDCollection(patients);
+                    View.setViewer(View.Viewer.APPOINTMENT_CREATOR_EDITOR_VIEW);
+                    this.view2 = View.factory(this, getNewEntityDescriptor(), this.desktopView);
+                    
+                    /*
+                    this.dialog = new AppointmentEditorDialog(this,getNewEntityDescriptor(),
+                            this.desktopView, ViewController.ViewMode.UPDATE);
+                    this.dialog.setLocationRelativeTo(this.view);
+                    this.dialog.initialiseView();
+                    this.dialog.setVisible(true);
+                    */
                     
                 }
                 catch (StoreException ex){
